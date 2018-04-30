@@ -30,17 +30,13 @@ func main() {
 	logger := log.New(os.Stdout, "http: ", log.LstdFlags)
 	logger.Println("Server is starting...")
 
-	router := http.NewServeMux()
-	router.Handle("/", index())
-	router.Handle("/healthz", healthz())
-
 	nextRequestID := func() string {
 		return fmt.Sprintf("%d", time.Now().UnixNano())
 	}
 
 	server := &http.Server{
 		Addr:         listenAddr,
-		Handler:      tracing(nextRequestID)(logging(logger)(router)),
+		Handler:      tracing(nextRequestID)(logging(logger)(routes())),
 		ErrorLog:     logger,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
@@ -74,6 +70,13 @@ func main() {
 
 	<-done
 	logger.Println("Server stopped")
+}
+
+func routes() *http.ServeMux {
+	router := http.NewServeMux()
+	router.Handle("/", index())
+	router.Handle("/healthz", healthz())
+	return router
 }
 
 func index() http.Handler {
